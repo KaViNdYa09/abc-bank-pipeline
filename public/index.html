@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABC Bank - Mobile Banking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            margin: 20px;
+            padding: 25px;
+            border-radius: 15px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .balance-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .balance-amount {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .account-number {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .quick-actions {
+            padding: 0 20px 20px;
+        }
+
+        .actions-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .action-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .action-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .action-label {
+            font-size: 14px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .transactions {
+            padding: 0 20px 20px;
+        }
+
+        .transaction-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .transaction-info h4 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .transaction-info p {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .transaction-amount {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .transaction-amount.credit {
+            color: #4CAF50;
+        }
+
+        .transaction-amount.debit {
+            color: #f44336;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 12px;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 10px;
+            margin-top: 10px;
+        }
+
+        .server-info {
+            margin-top: 5px;
+            font-size: 11px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 ABC Bank</h1>
+            <p>Welcome back, John Doe</p>
+        </div>
+
+        <div class="balance-card">
+            <div class="balance-label">Available Balance</div>
+            <div class="balance-amount">$12,543.80</div>
+            <div class="account-number">Account: **** **** **** 4567</div>
+        </div>
+
+        <div class="quick-actions">
+            <div class="actions-title">Quick Actions</div>
+            <div class="action-grid">
+                <div class="action-btn" onclick="alert('Transfer feature - Coming soon!')">
+                    <div class="action-icon">💸</div>
+                    <div class="action-label">Transfer</div>
+                </div>
+                <div class="action-btn" onclick="alert('Pay Bills feature - Coming soon!')">
+                    <div class="action-icon">💳</div>
+                    <div class="action-label">Pay Bills</div>
+                </div>
+                <div class="action-btn" onclick="alert('Deposit feature - Coming soon!')">
+                    <div class="action-icon">💰</div>
+                    <div class="action-label">Deposit</div>
+                </div>
+                <div class="action-btn" onclick="alert('Analytics feature - Coming soon!')">
+                    <div class="action-icon">📊</div>
+                    <div class="action-label">Analytics</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="transactions">
+            <div class="actions-title">Recent Transactions</div>
+            
+            <div class="transaction-item">
+                <div class="transaction-info">
+                    <h4>Salary Deposit</h4>
+                    <p>Oct 15, 2025</p>
+                </div>
+                <div class="transaction-amount credit">+$3,500.00</div>
+            </div>
+
+            <div class="transaction-item">
+                <div class="transaction-info">
+                    <h4>Online Shopping</h4>
+                    <p>Oct 18, 2025</p>
+                </div>
+                <div class="transaction-amount debit">-$127.50</div>
+            </div>
+
+            <div class="transaction-item">
+                <div class="transaction-info">
+                    <h4>Electricity Bill</h4>
+                    <p>Oct 19, 2025</p>
+                </div>
+                <div class="transaction-amount debit">-$85.20</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>ABC Bank Mobile Banking v1.0</p>
+            <p>Deployed: Manual Process (BEFORE DevOps)</p>
+            <span class="version-badge">MANUAL DEPLOYMENT</span>
+            <div class="server-info">Server: AWS EC2 | Deployment Method: Manual SSH</div>
+        </div>
+    </div>
+</body>
+</html>

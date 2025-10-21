@@ -1,0 +1,21 @@
+{
+  "name": "abc-bank-mobile",
+  "version": "1.0.0",
+  "description": "ABC Bank Mobile Banking Application - Before DevOps",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js"
+  },
+  "keywords": [
+    "banking",
+    "mobile",
+    "devops",
+    "nodejs"
+  ],
+  "author": "ESIS-08",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
