@@ -24,7 +24,7 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/balance', (req, res) => {
     res.json({
-        accountNumber: '****4567',
+        accountNumber: '****1234',
         balance: 12543.80,
         currency: 'USD',
         lastUpdated: new Date().toISOString()
@@ -62,7 +62,7 @@ app.get('/api/transactions', (req, res) => {
 app.get('/api/user', (req, res) => {
     res.json({
         name: 'John Doe',
-        accountNumber: '****4567',
+        accountNumber: '****1234',
         accountType: 'Savings',
         branch: 'Main Branch'
     });
