@@ -1,0 +1,13 @@
+# Create .dockerignore to optimize builds
+nano .dockerignore
+```
+
+**Add:**
+```
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+*.md
