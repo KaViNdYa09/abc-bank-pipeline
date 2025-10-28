@@ -1,72 +1,81 @@
 ---
 - name: Deploy ABC Bank Application with Docker
   hosts: localhost
-  become: yes
+  become: yes # Run tasks with sudo
   vars:
     app_name: abc-bank-automated
-    app_port: 3001
-    container_port: 3000
+    app_port: 3001 # Host port
+    container_port: 3000 # Container port
     image_name: abc-bank:latest
-    repo_url: 'https://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@github.com/KaViNdYa09/abc-bank-pipeline.git' 
-    build_path: /tmp/abc-bank-build # Temporary path to clone repo for building
+    # repo_url and build_path are no longer needed here
 
   tasks:
-    - name: Pull latest code from GitHub
-      git:
-        repo: 'https://github.com/KaViNdYa09/abc-bank-pipeline.git'
-        dest: /tmp/abc-bank-build
-        force: yes
-        version: main
-      tags: [code]
+    # --- TASK REMOVED: Pull latest code from GitHub ---
 
-    - name: Stop existing container
-      docker_container:
+    - name: Ensure git is installed (required by some docker build contexts, though not strictly needed here)
+      ansible.builtin.apt:
+        name: git
+        state: present
+      tags: [build] # Keep tag for consistency
+
+    - name: Ensure target directory exists for app source (if needed later, e.g., for volumes)
+      ansible.builtin.file:
+        path: /opt/abc-bank-app # Example persistent path
+        state: directory
+        mode: '0755'
+      tags: [deploy] # Keep tag
+
+    - name: Stop and remove existing container (if running)
+      community.docker.docker_container:
         name: "{{ app_name }}"
         state: absent
-      ignore_errors: yes
+      ignore_errors: yes # Don't fail if container doesn't exist
       tags: [deploy]
 
-    - name: Remove old Docker image
-      docker_image:
+    - name: Remove old Docker image (optional - ensures latest base image updates are used in build)
+      community.docker.docker_image:
         name: "{{ image_name }}"
         state: absent
-      ignore_errors: yes
+      ignore_errors: yes # Don't fail if image doesn't exist
       tags: [deploy]
 
-    - name: Build Docker image
-      docker_image:
+    # --- BUILDS FROM JENKINS WORKSPACE ---
+    - name: Build Docker image from Jenkins workspace
+      community.docker.docker_image:
         name: "{{ image_name }}"
         build:
-          path: /tmp/abc-bank-build
-          pull: yes
+          # Use the environment variable Jenkins sets for its workspace
+          # This variable is automatically available to Ansible when run by Jenkins
+          path: "{{ ansible_env.WORKSPACE }}"
+          pull: yes # Pull base image updates if needed
         source: build
         state: present
       tags: [build]
 
     - name: Run Docker container
-      docker_container:
+      community.docker.docker_container:
         name: "{{ app_name }}"
         image: "{{ image_name }}"
         state: started
-        restart_policy: always
+        restart_policy: always # Keep running even after reboot
         ports:
-          - "{{ app_port }}:{{ container_port }}"
-        healthcheck:
-          test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
-          interval: 30s
-          timeout: 3s
-          retries: 3
+          - "{{ app_port }}:{{ container_port }}" # Map host:container
       tags: [deploy]
 
-    - name: Wait for application to be healthy
-      uri:
-        url: "http://localhost:{{ app_port }}/api/health"
+    # --- CHECKS CORRECT HEALTH PATH ---
+    - name: Wait for application health check endpoint to become available
+      ansible.builtin.uri:
+        url: "http://localhost:{{ app_port }}/health" # Correct path from your app.js
         status_code: 200
-      retries: 10
-      delay: 3
+      register: health_check_result
+      until: health_check_result.status == 200
+      retries: 12 # Increased retries slightly
+      delay: 5 # Wait 5 seconds between retries
       tags: [verify]
 
     - name: Display deployment status
-      debug:
+      ansible.builtin.debug:
         msg: "✅ Deployment successful! App running on port {{ app_port }}"
       tags: [verify]
+
+    # --- TASK REMOVED: Remove temporary build directory ---
