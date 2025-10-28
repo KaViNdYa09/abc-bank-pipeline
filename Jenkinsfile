@@ -26,7 +26,7 @@ pipeline {
                 // Jenkins has permission to run Docker/Ansible
                 // because you added the 'jenkins' user to the 'docker' group
                 // and installed Ansible on the server.
-                sh 'ansible-playbook -i ansible/inventory.yml ansible/deploy.yml'
+                sh 'ansible-playbook -i ansible/inventory.yml ansible/deploy.yml --extra-vars="jenkins_workspace=${WORKSPACE}"'
             }
         }
     }
