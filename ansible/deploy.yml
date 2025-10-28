@@ -46,7 +46,7 @@
         build:
           # Use the environment variable Jenkins sets for its workspace
           # This variable is automatically available to Ansible when run by Jenkins
-          path: "{{ ansible_env.WORKSPACE }}"
+          path: "{{ jenkins_workspace }}"
           pull: yes # Pull base image updates if needed
         source: build
         state: present
