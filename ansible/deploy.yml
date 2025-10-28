@@ -1,0 +1,72 @@
+---
+- name: Deploy ABC Bank Application with Docker
+  hosts: localhost
+  become: yes
+  vars:
+    app_name: abc-bank-automated
+    app_port: 3001
+    container_port: 3000
+    image_name: abc-bank:latest
+    repo_url: 'https://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@github.com/KaViNdYa09/abc-bank-pipeline.git' 
+    build_path: /tmp/abc-bank-build # Temporary path to clone repo for building
+
+  tasks:
+    - name: Pull latest code from GitHub
+      git:
+        repo: 'https://github.com/KaViNdYa09/abc-bank-pipeline.git'
+        dest: /tmp/abc-bank-build
+        force: yes
+        version: main
+      tags: [code]
+
+    - name: Stop existing container
+      docker_container:
+        name: "{{ app_name }}"
+        state: absent
+      ignore_errors: yes
+      tags: [deploy]
+
+    - name: Remove old Docker image
+      docker_image:
+        name: "{{ image_name }}"
+        state: absent
+      ignore_errors: yes
+      tags: [deploy]
+
+    - name: Build Docker image
+      docker_image:
+        name: "{{ image_name }}"
+        build:
+          path: /tmp/abc-bank-build
+          pull: yes
+        source: build
+        state: present
+      tags: [build]
+
+    - name: Run Docker container
+      docker_container:
+        name: "{{ app_name }}"
+        image: "{{ image_name }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "{{ app_port }}:{{ container_port }}"
+        healthcheck:
+          test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+          interval: 30s
+          timeout: 3s
+          retries: 3
+      tags: [deploy]
+
+    - name: Wait for application to be healthy
+      uri:
+        url: "http://localhost:{{ app_port }}/api/health"
+        status_code: 200
+      retries: 10
+      delay: 3
+      tags: [verify]
+
+    - name: Display deployment status
+      debug:
+        msg: "✅ Deployment successful! App running on port {{ app_port }}"
+      tags: [verify]
