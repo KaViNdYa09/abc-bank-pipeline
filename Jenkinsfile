@@ -1,43 +1,76 @@
 pipeline {
-    // Run on the main Jenkins server (your EC2 instance)
-    agent any 
-
+    // Run this pipeline on any available Jenkins agent
+    agent any
+    
+    // Define environment variables to use in the pipeline
+    environment {
+        // --- !!! CHANGE THIS LINE !!! ---
+        EC2_IP = 'YOUR_NEW_EC2_IP' // Replace with your EC2's public IP
+        
+        // These must match your file names
+        ANSIBLE_INVENTORY = 'ansible/inventory.yml'
+        ANSIBLE_PLAYBOOK = 'ansible/deploy.yml'
+    }
+    
     stages {
-
-        // Stage 1: Check out the code from your private GitHub repo
+        // Stage 1: Get the code from GitHub
         stage('Checkout') {
             steps {
                 echo '📥 Checking out code from GitHub...'
-
-                // This tells Jenkins to use the credential with the ID 'github-pat'
-                // which you created in the Jenkins Credentials manager.
-                git branch: 'main', 
-                    credentialsId: 'github-pat', 
-                    url: 'https://github.com/KaViNdYa09/abc-bank-pipeline.git'
+                // 'checkout scm' automatically uses the Git repo and
+                // credentials you set in the Jenkins job.
+                checkout scm
             }
         }
-
-        // Stage 2: Run the Ansible playbook
-        stage('Deploy with Ansible') {
+        
+        // Stage 2: Validate the files exist
+        stage('Validate Files') {
             steps {
-                echo '🚀 Running Ansible playbook...'
-
-                // This runs the *exact* command you already tested successfully.
-                // Jenkins has permission to run Docker/Ansible
-                // because you added the 'jenkins' user to the 'docker' group
-                // and installed Ansible on the server.
-                sh 'ansible-playbook -i ansible/inventory.yml ansible/deploy.yml --extra-vars="jenkins_workspace=${WORKSPACE}"'
+                echo '✅ Validating deployment files...'
+                sh '''
+                    ls -la
+                    echo "--- Ansible Playbook ---"
+                    cat ${ANSIBLE_PLAYBOOK}
+                '''
+            }
+        }
+        
+        // Stage 3: Run Ansible to deploy the app
+        stage('Deploy to EC2 with Ansible') {
+            steps {
+                echo "🚀 Deploying to EC2 (${EC2_IP})..."
+                sh '''
+                    # This runs your Ansible playbook
+                    ansible-playbook -i ${ANSIBLE_INVENTORY} ${ANSIBLE_PLAYBOOK}
+                '''
+            }
+        }
+        
+        // Stage 4: Wait and verify the app is running
+        stage('Verify Deployment') {
+            steps {
+                echo '🏥 Verifying deployment...'
+                sh '''
+                    echo "Waiting for 10 seconds for container to start..."
+                    sleep 10
+                    
+                    # This pings your app. If it fails, the pipeline fails.
+                    echo "Pinging health check endpoint..."
+                    curl -f http://${EC2_IP}:3001/api/health
+                '''
             }
         }
     }
-
-    // Post-build actions: always run, regardless of success or failure
+    
+    // Post-build actions: These run after all stages
     post {
-        always {
-            echo '🧹 Cleaning up Jenkins workspace...'
-            // This cleans up the files Jenkins checked out 
-            // to keep the server tidy.
-            cleanWs() 
+        success {
+            echo '✅ Deployment to EC2 successful!'
+            echo "🎉 Application live at http://${EC2_IP}:3001"
+        }
+        failure {
+            echo '❌ Deployment failed!'
+            echo 'Check the console output and Ansible logs for details.'
         }
     }
 }
