@@ -5,7 +5,7 @@ pipeline {
     // Define environment variables to use in the pipeline
     environment {
         // --- !!! CHANGE THIS LINE !!! ---
-        EC2_IP = 'YOUR_NEW_EC2_IP' // Replace with your EC2's public IP
+        EC2_IP = '13.159.190.186' // Replace with your EC2's public IP
         
         // These must match your file names
         ANSIBLE_INVENTORY = 'ansible/inventory.yml'

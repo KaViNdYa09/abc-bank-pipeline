@@ -1,81 +1,67 @@
 ---
-- name: Deploy ABC Bank Application with Docker
-  hosts: localhost
-  become: yes # Run tasks with sudo
+- name: Deploy ABC Bank to EC2 Production
+  hosts: production  # 1. This correctly targets 'production' from your inventory.yml
+  become: yes      # 2. This runs 'sudo' on the EC2, where 'ubuntu' has permission
   vars:
     app_name: abc-bank-automated
-    app_port: 3001 # Host port
-    container_port: 3000 # Container port
-    image_name: abc-bank:latest
-    # repo_url and build_path are no longer needed here
+    app_port: 3001
+    github_repo: https://github.com/KaViNdYa09/abc-bank-pipeline.git
+    deploy_path: /home/ubuntu/abc-bank-deploy
 
   tasks:
-    # --- TASK REMOVED: Pull latest code from GitHub ---
-
-    - name: Ensure git is installed (required by some docker build contexts, though not strictly needed here)
-      ansible.builtin.apt:
-        name: git
+    - name: Install Docker on EC2
+      apt:
+        name: docker.io
         state: present
-      tags: [build] # Keep tag for consistency
+        update_cache: yes
 
-    - name: Ensure target directory exists for app source (if needed later, e.g., for volumes)
-      ansible.builtin.file:
-        path: /opt/abc-bank-app # Example persistent path
-        state: directory
-        mode: '0755'
-      tags: [deploy] # Keep tag
-
-    - name: Stop and remove existing container (if running)
-      community.docker.docker_container:
-        name: "{{ app_name }}"
-        state: absent
-      ignore_errors: yes # Don't fail if container doesn't exist
-      tags: [deploy]
-
-    - name: Remove old Docker image (optional - ensures latest base image updates are used in build)
-      community.docker.docker_image:
-        name: "{{ image_name }}"
-        state: absent
-      ignore_errors: yes # Don't fail if image doesn't exist
-      tags: [deploy]
-
-    # --- BUILDS FROM JENKINS WORKSPACE ---
-    - name: Build Docker image from Jenkins workspace
-      community.docker.docker_image:
-        name: "{{ image_name }}"
-        build:
-          # Use the environment variable Jenkins sets for its workspace
-          # This variable is automatically available to Ansible when run by Jenkins
-          path: "{{ jenkins_workspace }}"
-          pull: yes # Pull base image updates if needed
-        source: build
-        state: present
-      tags: [build]
-
-    - name: Run Docker container
-      community.docker.docker_container:
-        name: "{{ app_name }}"
-        image: "{{ image_name }}"
+    - name: Ensure Docker is running
+      systemd:
+        name: docker
         state: started
-        restart_policy: always # Keep running even after reboot
+        enabled: yes
+
+    - name: Add ubuntu user to docker group (on EC2)
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Pull latest code from GitHub (to EC2)
+      git:
+        repo: "{{ github_repo }}"
+        dest: "{{ deploy_path }}"
+        version: main
+        force: yes # Overwrite any local changes
+
+    - name: Stop existing container
+      community.docker.docker_container:
+        name: "{{ app_name }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: Build Docker image on EC2
+      community.docker.docker_image:
+        name: abc-bank
+        tag: latest
+        source: build
+        build:
+          path: "{{ deploy_path }}" # Build from the code we just pulled
+          pull: yes
+        state: present
+
+    - name: Run Docker container on EC2
+      community.docker.docker_container:
+        name: "{{ app_name }}"
+        image: abc-bank:latest
+        state: started
+        restart_policy: always
         ports:
-          - "{{ app_port }}:{{ container_port }}" # Map host:container
-      tags: [deploy]
+          - "{{ app_port }}:3000" # Map 3001 (EC2) to 3000 (container)
 
-    # --- CHECKS CORRECT HEALTH PATH ---
-    - name: Wait for application health check endpoint to become available
-      ansible.builtin.uri:
-        url: "http://localhost:{{ app_port }}/health" # Correct path from your app.js
+    - name: Health check (on EC2)
+      uri:
+        url: "http://localhost:{{ app_port }}/api/health" # 3. Uses the correct health path
         status_code: 200
-      register: health_check_result
-      until: health_check_result.status == 200
-      retries: 12 # Increased retries slightly
-      delay: 5 # Wait 5 seconds between retries
-      tags: [verify]
-
-    - name: Display deployment status
-      ansible.builtin.debug:
-        msg: "✅ Deployment successful! App running on port {{ app_port }}"
-      tags: [verify]
-
-    # --- TASK REMOVED: Remove temporary build directory ---
+      retries: 5
+      delay: 3
