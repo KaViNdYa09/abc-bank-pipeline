@@ -14,7 +14,7 @@ app.get('/api/health', (req, res) => {
         status: 'OK',
         message: 'ABC Bank API is running',
         version: '1.0.0',
-        deployment: 'Manual - Before DevOps',
+        deployment: 'Automated - v2.0 TEST SUCCESS',
         timestamp: new Date().toISOString(),
         server: 'AWS EC2',
         hostname: os.hostname(),
